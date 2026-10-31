@@ -28,6 +28,14 @@ def _serialize(item):
             item[field] = item[field].isoformat()
     return item
 
+def _mark_expired(cur):
+    cur.execute(
+        "UPDATE subscriptions SET status='expired' "
+        "WHERE status='active' "
+        "AND end_date IS NOT NULL "
+        "AND end_date < CURDATE()"
+    )
+
 
 @subscriptions_bp.post("/")
 def create_subscription():
@@ -93,6 +101,8 @@ def list_subscriptions():
     try:
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
+        _mark_expired(cur)
+        conn.commit()
         cur.execute("SELECT * FROM subscriptions ORDER BY id DESC")
         return jsonify([_serialize(item) for item in cur.fetchall()])
     except mysql.connector.Error:
@@ -111,6 +121,8 @@ def get_subscription(subscription_id):
     try:
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
+        _mark_expired(cur)
+        conn.commit()
         cur.execute(
             "SELECT * FROM subscriptions WHERE id=%s",
             (subscription_id,),
