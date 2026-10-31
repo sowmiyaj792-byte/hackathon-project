@@ -135,7 +135,19 @@ def login():
     session["user_id"] = user["id"]
     session["name"] = user["name"]
     session["role"] = user["role"]
-    return redirect(url_for("auth.profile"))
+    role = session.get("role")
+
+    if role == "admin":
+      return redirect(url_for("admin.dashboard"))
+
+    elif role == "staff":
+      return redirect(url_for("staff.dashboard"))
+
+    elif role == "customer":
+      return redirect(url_for("customer.dashboard"))
+
+    else:
+      return redirect(url_for("auth.login"))
 
 
 @bp.route("/profile")
